@@ -1,30 +1,88 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft, BadgeCheck, CreditCard, HardHat, ShieldAlert, UserRound } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Table, Td, Th } from "@/components/data/table";
 import { Badge, statusTone } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { funcionariosApi } from "@/lib/api";
+import { pushLog } from "@/lib/local-store";
+import { useSafeAccessStore } from "@/lib/use-safeaccess-store";
 import { formatDate } from "@/lib/utils";
 
-export default async function FuncionarioDetalhePage({ params }: { params: { id: string } }) {
-  const funcionario = await funcionariosApi.detail(params.id);
+export default function FuncionarioDetalhePage({ params }: { params: { id: string } }) {
+  const { state, ready, update } = useSafeAccessStore();
+  const funcionario = state?.funcionarios.find((item) => item.id === params.id);
+
+  if (!ready || !state) {
+    return <p className="text-sm font-semibold text-muted">Carregando funcionario...</p>;
+  }
+
+  if (!funcionario) {
+    return (
+      <>
+        <PageHeader title="Funcionario nao encontrado" description="O registro pode ter sido removido localmente." />
+        <Link href="/funcionarios" className="text-sm font-semibold text-ink underline">
+          Voltar para funcionarios
+        </Link>
+      </>
+    );
+  }
+
+  const funcionarioId = funcionario.id;
+
+  function toggleStatus() {
+    update((draft) => {
+      const item = draft.funcionarios.find((current) => current.id === funcionarioId);
+
+      if (!item) {
+        return;
+      }
+
+      item.status = item.status === "ATIVO" ? "INATIVO" : "ATIVO";
+      if (item.status === "INATIVO") {
+        item.cracha.status = "INATIVO";
+      }
+
+      pushLog(draft, {
+        funcionario_nome: item.nome,
+        area_nome: "Cadastro de funcionarios",
+        resultado: item.status === "ATIVO" ? "PERMITIDO" : "NEGADO",
+        motivo: item.status === "ATIVO" ? "Funcionario reativado" : "Funcionario desativado"
+      });
+    });
+  }
+
+  function invalidateBadge() {
+    update((draft) => {
+      const item = draft.funcionarios.find((current) => current.id === funcionarioId);
+
+      if (!item) {
+        return;
+      }
+
+      item.cracha.status = "INATIVO";
+      pushLog(draft, {
+        funcionario_nome: item.nome,
+        area_nome: "Credencial RFID",
+        resultado: "NEGADO",
+        motivo: "Cracha invalidado"
+      });
+    });
+  }
 
   return (
     <>
       <PageHeader
         title={funcionario.nome}
-        description={`Matrícula ${funcionario.matricula} · ${funcionario.cargo.nome} · ${funcionario.setor.nome}`}
+        description={`Matricula ${funcionario.matricula} - ${funcionario.cargo.nome} - ${funcionario.setor.nome}`}
         action={
           <div className="flex flex-wrap gap-2">
-            <Link
-              href="/funcionarios"
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold text-ink transition hover:border-ink"
-            >
+            <Link href="/funcionarios" className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-line bg-white px-4 text-sm font-semibold text-ink transition hover:border-ink">
               <ArrowLeft size={16} aria-hidden />
               Voltar
             </Link>
-            <Button variant={funcionario.status === "ATIVO" ? "danger" : "secondary"}>
+            <Button type="button" variant={funcionario.status === "ATIVO" ? "danger" : "secondary"} onClick={toggleStatus}>
               <ShieldAlert size={16} aria-hidden />
               {funcionario.status === "ATIVO" ? "Desativar" : "Reativar"}
             </Button>
@@ -40,8 +98,8 @@ export default async function FuncionarioDetalhePage({ params }: { params: { id:
                 <UserRound size={18} aria-hidden />
               </span>
               <div>
-                <h2 className="font-bold">Dados pessoais e vínculo</h2>
-                <p className="text-sm text-muted">Informações usadas no cadastro central de identidades.</p>
+                <h2 className="font-bold">Dados pessoais e vinculo</h2>
+                <p className="text-sm text-muted">Informacoes usadas no cadastro central de identidades.</p>
               </div>
             </div>
 
@@ -50,9 +108,9 @@ export default async function FuncionarioDetalhePage({ params }: { params: { id:
               <Info label="RG" value={funcionario.rg} />
               <Info label="E-mail" value={funcionario.email} />
               <Info label="Nascimento" value={formatDate(funcionario.data_nascimento)} />
-              <Info label="Admissão" value={formatDate(funcionario.data_admissao)} />
+              <Info label="Admissao" value={formatDate(funcionario.data_admissao)} />
               <Info label="Turno" value={funcionario.turno} />
-              <Info label="Gênero" value={funcionario.genero} />
+              <Info label="Genero" value={funcionario.genero} />
               <Info label="Setor" value={funcionario.setor.nome} />
               <Info label="Cargo" value={funcionario.cargo.nome} />
             </dl>
@@ -65,7 +123,7 @@ export default async function FuncionarioDetalhePage({ params }: { params: { id:
               </span>
               <div>
                 <h2 className="font-bold">EPIs vinculados</h2>
-                <p className="text-sm text-muted">Validade documental usada na decisão de acesso.</p>
+                <p className="text-sm text-muted">Validade documental usada na decisao de acesso.</p>
               </div>
             </div>
 
@@ -91,6 +149,11 @@ export default async function FuncionarioDetalhePage({ params }: { params: { id:
                     </Td>
                   </tr>
                 ))}
+                {!funcionario.epis.length ? (
+                  <tr>
+                    <Td colSpan={5}>Nenhum EPI vinculado.</Td>
+                  </tr>
+                ) : null}
               </tbody>
             </Table>
           </article>
@@ -103,8 +166,8 @@ export default async function FuncionarioDetalhePage({ params }: { params: { id:
                 <CreditCard size={18} aria-hidden />
               </span>
               <div>
-                <h2 className="font-bold">Crachá RFID</h2>
-                <p className="text-sm text-muted">Credencial ativa do funcionário.</p>
+                <h2 className="font-bold">Cracha RFID</h2>
+                <p className="text-sm text-muted">Credencial ativa do funcionario.</p>
               </div>
             </div>
 
@@ -120,8 +183,8 @@ export default async function FuncionarioDetalhePage({ params }: { params: { id:
               </div>
             </div>
 
-            <Button className="mt-5 w-full" variant="danger">
-              Invalidar crachá
+            <Button className="mt-5 w-full" variant="danger" type="button" onClick={invalidateBadge} disabled={funcionario.cracha.status === "INATIVO"}>
+              Invalidar cracha
             </Button>
           </article>
 
@@ -131,7 +194,7 @@ export default async function FuncionarioDetalhePage({ params }: { params: { id:
               <div>
                 <h2 className="font-bold">Resumo operacional</h2>
                 <p className="mt-1 text-sm text-muted">
-                  Funcionário com status {funcionario.status.toLowerCase()} e {funcionario.epis.length} EPIs registrados no cadastro.
+                  Funcionario com status {funcionario.status.toLowerCase()} e {funcionario.epis.length} EPIs registrados no cadastro.
                 </p>
               </div>
             </div>
