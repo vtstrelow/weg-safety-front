@@ -31,6 +31,7 @@ export type CreatedResponse = {
 export type EntityOption = {
   id: string;
   nome: string;
+  descricao?: string;
   ativo?: boolean;
 };
 
