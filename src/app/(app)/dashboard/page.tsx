@@ -1,8 +1,12 @@
-import { AlertTriangle, DoorOpen, HardHat, ShieldCheck, Users, XCircle } from "lucide-react";
+"use client";
+
+import { AlertTriangle, DoorOpen, HardHat, RotateCcw, ShieldCheck, Users, XCircle } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge, statusTone } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, Td, Th } from "@/components/data/table";
-import { dashboardApi } from "@/lib/api";
+import { dashboardResumo, criticalEpis, resetState } from "@/lib/local-store";
+import { useSafeAccessStore } from "@/lib/use-safeaccess-store";
 import { formatDate, formatDateTime } from "@/lib/utils";
 
 const kpiIcons = {
@@ -19,7 +23,7 @@ const cardStyles = {
     border: "border-neutral-200",
     icon: "bg-neutral-100 text-ink",
     accent: "bg-neutral-300",
-    caption: "Operação cadastrada"
+    caption: "Operacao cadastrada"
   },
   success: {
     border: "border-emerald-200",
@@ -37,20 +41,23 @@ const cardStyles = {
     border: "border-red-200",
     icon: "bg-red-50 text-red-700",
     accent: "bg-red-500",
-    caption: "Ação recomendada"
+    caption: "Acao recomendada"
   }
 };
 
-export default async function DashboardPage() {
-  const [summary, criticalEpis, recentAccess] = await Promise.all([
-    dashboardApi.summary(),
-    dashboardApi.criticalEpis(),
-    dashboardApi.recentAccess()
-  ]);
+export default function DashboardPage() {
+  const { state, ready, replace } = useSafeAccessStore();
 
+  if (!ready || !state) {
+    return <p className="text-sm font-semibold text-muted">Carregando dashboard...</p>;
+  }
+
+  const summary = dashboardResumo(state);
+  const critical = criticalEpis(state);
+  const recentAccess = state.logs.slice(0, 6);
   const cards = [
-    { label: "Funcionários ativos", value: summary.total_funcionarios_ativos, icon: kpiIcons.funcionarios, tone: "success" },
-    { label: "Áreas ativas", value: summary.total_areas_ativas, icon: kpiIcons.areas, tone: "neutral" },
+    { label: "Funcionarios ativos", value: summary.total_funcionarios_ativos, icon: kpiIcons.funcionarios, tone: "success" },
+    { label: "Areas ativas", value: summary.total_areas_ativas, icon: kpiIcons.areas, tone: "neutral" },
     { label: "EPIs vencidos", value: summary.total_epis_vencidos, icon: kpiIcons.vencidos, tone: "danger" },
     { label: "EPIs a vencer", value: summary.total_epis_a_vencer, icon: kpiIcons.vencer, tone: "warning" },
     { label: "Acessos hoje", value: summary.total_acessos_hoje, icon: kpiIcons.acessos, tone: "success" },
@@ -59,7 +66,16 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <PageHeader title="Dashboard" description="Resumo operacional para acompanhamento do controle de acesso." />
+      <PageHeader
+        title="Dashboard"
+        description="Resumo operacional para acompanhamento do controle de acesso."
+        action={
+          <Button type="button" variant="secondary" onClick={() => replace(resetState())}>
+            <RotateCcw size={16} aria-hidden />
+            Restaurar dados
+          </Button>
+        }
+      />
 
       <section className="mb-5 grid gap-4 overflow-hidden rounded-lg border border-[#18201f] bg-[#121615] p-5 text-white shadow-lift lg:grid-cols-[1fr_auto] lg:items-center">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -67,16 +83,16 @@ export default async function DashboardPage() {
             <ShieldCheck size={20} aria-hidden />
           </span>
           <div>
-            <p className="text-sm font-bold text-white">Operação em modo administrativo</p>
+            <p className="text-sm font-bold text-white">Operacao em modo administrativo</p>
             <p className="mt-1 max-w-3xl text-sm leading-6 text-white/65">
-              Dados simulados ativos. O front já está preparado para consumir a API quando o backend estiver online.
+              Dados locais persistidos. Cadastros, filtros e acoes ja funcionam enquanto o backend nao esta online.
             </p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Badge tone="success">API mock ativa</Badge>
+          <Badge tone="success">Mock ativo</Badge>
           <span className="inline-flex min-h-6 items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white">
-            JWT preparado
+            JWT simulado
           </span>
         </div>
       </section>
@@ -109,22 +125,22 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <HardHat size={18} aria-hidden />
-              <h2 className="text-lg font-bold">EPIs críticos</h2>
+              <h2 className="text-lg font-bold">EPIs criticos</h2>
             </div>
-            <Badge tone="warning">{criticalEpis.total} alertas</Badge>
+            <Badge tone="warning">{critical.length} alertas</Badge>
           </div>
           <Table>
             <thead className="table-head">
               <tr>
-                <Th>Funcionário</Th>
+                <Th>Funcionario</Th>
                 <Th>EPI</Th>
                 <Th>Validade</Th>
                 <Th>Status</Th>
               </tr>
             </thead>
             <tbody>
-              {criticalEpis.data.map((epi) => (
-                <tr key={`${epi.funcionario_nome}-${epi.epi_tipo}`}>
+              {critical.map((epi) => (
+                <tr key={`${epi.funcionario_nome}-${epi.epi_tipo}-${epi.nr_ca}`}>
                   <Td>{epi.funcionario_nome}</Td>
                   <Td>{epi.epi_tipo}</Td>
                   <Td>{formatDate(epi.data_validade)}</Td>
@@ -133,6 +149,11 @@ export default async function DashboardPage() {
                   </Td>
                 </tr>
               ))}
+              {!critical.length ? (
+                <tr>
+                  <Td colSpan={4}>Nenhum EPI critico no momento.</Td>
+                </tr>
+              ) : null}
             </tbody>
           </Table>
         </div>
@@ -143,19 +164,19 @@ export default async function DashboardPage() {
               <ShieldCheck size={18} aria-hidden />
               <h2 className="text-lg font-bold">Acessos recentes</h2>
             </div>
-            <Badge tone="success">Hoje</Badge>
+            <Badge tone="success">Ao vivo</Badge>
           </div>
           <Table>
             <thead className="table-head">
               <tr>
-                <Th>Funcionário</Th>
-                <Th>Área</Th>
+                <Th>Funcionario</Th>
+                <Th>Area</Th>
                 <Th>Resultado</Th>
                 <Th>Data/Hora</Th>
               </tr>
             </thead>
             <tbody>
-              {recentAccess.data.map((log) => (
+              {recentAccess.map((log) => (
                 <tr key={log.id}>
                   <Td>{log.funcionario_nome}</Td>
                   <Td>{log.area_nome}</Td>

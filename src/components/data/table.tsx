@@ -16,10 +16,18 @@ export function Table({
   );
 }
 
-export function Th({ children }: { children: React.ReactNode }) {
-  return <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-normal">{children}</th>;
+export function Th({ children, className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
+  return (
+    <th className={cn("px-4 py-3 text-[11px] font-semibold uppercase tracking-normal", className)} {...props}>
+      {children}
+    </th>
+  );
 }
 
-export function Td({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <td className={cn("border-t border-neutral-200 px-4 py-3 text-sm text-neutral-700", className)}>{children}</td>;
+export function Td({ children, className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
+  return (
+    <td className={cn("border-t border-neutral-200 px-4 py-3 text-sm text-neutral-700", className)} {...props}>
+      {children}
+    </td>
+  );
 }

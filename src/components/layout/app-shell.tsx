@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ClipboardList,
   DoorOpen,
@@ -14,19 +15,50 @@ import {
   Wifi,
   Users
 } from "lucide-react";
+import { clearSession, getSession, type SafeAccessSession } from "@/lib/local-store";
 import { cn, initials } from "@/lib/utils";
 
 const navigation = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Funcionários", href: "/funcionarios", icon: Users },
-  { label: "Áreas", href: "/areas", icon: DoorOpen },
+  { label: "Funcionarios", href: "/funcionarios", icon: Users },
+  { label: "Areas", href: "/areas", icon: DoorOpen },
   { label: "EPIs", href: "/epis", icon: HardHat },
-  { label: "Relatórios", href: "/relatorios", icon: ClipboardList },
-  { label: "Configurações", href: "/configuracoes", icon: Settings }
+  { label: "Relatorios", href: "/relatorios", icon: ClipboardList },
+  { label: "Configuracoes", href: "/configuracoes", icon: Settings }
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [session, setSession] = useState<SafeAccessSession | null>(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    const currentSession = getSession();
+    setSession(currentSession);
+    setCheckingSession(false);
+
+    if (!currentSession) {
+      router.replace("/login");
+    }
+  }, [router]);
+
+  function handleLogout() {
+    clearSession();
+    router.replace("/login");
+  }
+
+  if (checkingSession) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-6 text-sm font-semibold text-muted">
+        Carregando painel...
+      </main>
+    );
+  }
+
+  if (!session) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
@@ -43,7 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/12 text-sm font-semibold lg:hidden">
-            JS
+            {initials(session.nome)}
           </div>
         </div>
 
@@ -55,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
             <span className="mt-2 flex items-center gap-2 text-white/55">
               <Wifi size={14} aria-hidden />
-              Ambiente local ativo
+              Dados locais persistidos
             </span>
           </div>
         </div>
@@ -93,15 +125,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="relative mt-auto hidden border-t border-white/10 p-4 lg:block">
           <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.055] p-3 shadow-sm">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-semibold text-ink">
-              {initials("João Silva")}
+              {initials(session.nome)}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-white">João Silva</p>
+              <p className="truncate text-sm font-semibold text-white">{session.nome}</p>
               <p className="truncate text-xs text-white/55">Administrador</p>
             </div>
-            <Link aria-label="Sair" href="/login" className="rounded-md p-2 text-white/55 transition hover:bg-white/10 hover:text-white">
+            <button type="button" aria-label="Sair" onClick={handleLogout} className="rounded-md p-2 text-white/55 transition hover:bg-white/10 hover:text-white">
               <LogOut size={16} aria-hidden />
-            </Link>
+            </button>
           </div>
         </div>
       </aside>
