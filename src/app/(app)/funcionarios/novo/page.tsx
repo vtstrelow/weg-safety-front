@@ -73,7 +73,7 @@ export default function NovoFuncionarioPage() {
     const setor = currentState.setores.find((item) => item.id === String(formData.get("setor_id")));
 
     if (!cargo || !setor) {
-      setMessage("Selecione cargo e setor para salvar o funcionario.");
+      setMessage("Selecione cargo e setor para salvar o funcionário.");
       return;
     }
 
@@ -136,9 +136,9 @@ export default function NovoFuncionarioPage() {
       draft.epis.push(...novosEpis);
       pushLog(draft, {
         funcionario_nome: nome,
-        area_nome: "Cadastro de funcionarios",
+        area_nome: "Cadastro de funcionários",
         resultado: "PERMITIDO",
-        motivo: "Funcionario criado"
+        motivo: "Funcionário criado"
       });
     });
 
@@ -148,8 +148,8 @@ export default function NovoFuncionarioPage() {
   return (
     <>
       <PageHeader
-        title="Cadastro - Funcionario direto"
-        description="Vinculo CLT com matricula corporativa, cracha RFID e EPIs."
+        title="Cadastro - Funcionário direto"
+        description="Vínculo CLT com matrícula corporativa, crachá RFID e EPIs."
         action={
           <div className="flex gap-2">
             <Link href="/funcionarios" className="inline-flex h-10 items-center justify-center rounded-md border border-line bg-white px-4 text-sm font-semibold text-ink transition hover:border-ink">
@@ -195,23 +195,23 @@ export default function NovoFuncionarioPage() {
               </Field>
             </div>
 
-            <p className="label mb-3 mt-5">Vinculo</p>
+            <p className="label mb-3 mt-5">Vínculo</p>
             <div className="grid gap-4 lg:grid-cols-4">
               <Field label="Data nascimento">
                 <Input name="data_nascimento" type="date" required />
               </Field>
-              <Field label="Genero">
+              <Field label="Gênero">
                 <Select name="genero" defaultValue="" required>
                   <option value="">Selecione</option>
                   <option value="MASCULINO">Masculino</option>
                   <option value="FEMININO">Feminino</option>
-                  <option value="NAO_INFORMADO">Nao informado</option>
+                  <option value="NAO_INFORMADO">Não informado</option>
                 </Select>
               </Field>
               <Field label="E-mail corporativo" className="lg:col-span-2">
                 <Input name="email" type="email" required />
               </Field>
-              <Field label="Matricula">
+              <Field label="Matrícula">
                 <Input name="matricula" placeholder="Gerada automaticamente se vazio" />
               </Field>
               <Field label="Cargo">
@@ -234,7 +234,7 @@ export default function NovoFuncionarioPage() {
                   ))}
                 </Select>
               </Field>
-              <Field label="Admissao">
+              <Field label="Admissão">
                 <Input name="data_admissao" type="date" required />
               </Field>
               <Field label="Turno">
@@ -250,9 +250,9 @@ export default function NovoFuncionarioPage() {
         </section>
 
         <section className="surface p-4">
-          <p className="label mb-3">Cracha RFID</p>
+          <p className="label mb-3">Crachá RFID</p>
           <div className="grid gap-4 lg:grid-cols-[1fr_180px_1fr]">
-            <Field label="Numero Cracha / RFID">
+            <Field label="Número Crachá / RFID">
               <Input name="uid_rfid" required />
             </Field>
             <Field label="Validade">
@@ -262,7 +262,7 @@ export default function NovoFuncionarioPage() {
               <Select name="perfil_acesso" defaultValue="" required>
                 <option value="">Selecione</option>
                 <option value="OPERADOR">Operador</option>
-                <option value="MANUTENCAO">Manutencao</option>
+                <option value="MANUTENCAO">Manutenção</option>
                 <option value="SUPERVISOR">Supervisor</option>
                 <option value="VISITANTE">Visitante</option>
               </Select>
@@ -297,7 +297,7 @@ export default function NovoFuncionarioPage() {
                 <Th>CA</Th>
                 <Th>Entrega</Th>
                 <Th>Validade</Th>
-                <Th>Acoes</Th>
+                <Th>Ações</Th>
               </tr>
             </thead>
             <tbody>
@@ -308,7 +308,12 @@ export default function NovoFuncionarioPage() {
                   <Td>{formatDate(epi.data_entrega)}</Td>
                   <Td>{formatDate(epi.data_validade)}</Td>
                   <Td>
-                    <button type="button" aria-label="Remover EPI" onClick={() => setEpisVinculados((current) => current.filter((item) => item.id !== epi.id))} className="rounded-full bg-neutral-200 p-1.5 text-muted hover:text-ink">
+                    <button
+                      type="button"
+                      aria-label="Remover EPI"
+                      onClick={() => setEpisVinculados((current) => current.filter((item) => item.id !== epi.id))}
+                      className="rounded-full bg-neutral-200 p-1.5 text-muted hover:text-ink"
+                    >
                       <X size={14} aria-hidden />
                     </button>
                   </Td>

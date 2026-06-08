@@ -13,12 +13,15 @@ import { funcionarioResumo, pushLog } from "@/lib/local-store";
 import { useSafeAccessStore } from "@/lib/use-safeaccess-store";
 import { initials } from "@/lib/utils";
 
+const PAGE_SIZE = 10;
+
 export default function FuncionariosPage() {
   const { state, ready, update } = useSafeAccessStore();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [setor, setSetor] = useState("");
   const [cargo, setCargo] = useState("");
+  const [page, setPage] = useState(1);
 
   const funcionarios = useMemo(() => (state?.funcionarios ?? []).map(funcionarioResumo), [state]);
   const filtered = useMemo(
@@ -34,8 +37,17 @@ export default function FuncionariosPage() {
     [cargo, funcionarios, search, setor, status]
   );
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  function handleFilterChange(fn: () => void) {
+    fn();
+    setPage(1);
+  }
+
   if (!ready || !state) {
-    return <p className="text-sm font-semibold text-muted">Carregando funcionarios...</p>;
+    return <p className="text-sm font-semibold text-muted">Carregando funcionários...</p>;
   }
 
   const ativos = funcionarios.filter((funcionario) => funcionario.status === "ATIVO").length;
@@ -57,9 +69,9 @@ export default function FuncionariosPage() {
 
       pushLog(draft, {
         funcionario_nome: funcionario.nome,
-        area_nome: "Cadastro de funcionarios",
+        area_nome: "Cadastro de funcionários",
         resultado: funcionario.status === "ATIVO" ? "PERMITIDO" : "NEGADO",
-        motivo: funcionario.status === "ATIVO" ? "Funcionario reativado" : "Funcionario desativado"
+        motivo: funcionario.status === "ATIVO" ? "Funcionário reativado" : "Funcionário desativado"
       });
     });
   }
@@ -67,15 +79,15 @@ export default function FuncionariosPage() {
   return (
     <>
       <PageHeader
-        title="Funcionarios"
-        description="Gestao de pessoas, vinculo funcional, cracha e status de acesso."
+        title="Funcionários"
+        description="Gestão de pessoas, vínculo funcional, crachá e status de acesso."
         action={
           <Link
             href="/funcionarios/novo"
             className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-ink bg-ink px-4 text-sm font-semibold text-white transition hover:bg-black sm:w-auto"
           >
             <Plus size={16} aria-hidden />
-            Novo funcionario
+            Novo funcionário
           </Link>
         }
       />
@@ -83,20 +95,25 @@ export default function FuncionariosPage() {
       <section className="mb-5 grid gap-3 md:grid-cols-3">
         <SummaryCard icon={<BadgeCheck size={18} aria-hidden />} label="Ativos" value={ativos} tone="success" />
         <SummaryCard icon={<UserX size={18} aria-hidden />} label="Inativos" value={inativos} tone="danger" />
-        <SummaryCard icon={<CreditCard size={18} aria-hidden />} label="Crachas ativos" value={crachasAtivos} tone="neutral" />
+        <SummaryCard icon={<CreditCard size={18} aria-hidden />} label="Crachás ativos" value={crachasAtivos} tone="neutral" />
       </section>
 
       <section className="panel mb-5 grid gap-3 p-4 lg:grid-cols-[1fr_160px_160px_160px_auto]">
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden />
-          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nome ou matricula" className="pl-9" />
+          <Input
+            value={search}
+            onChange={(event) => handleFilterChange(() => setSearch(event.target.value))}
+            placeholder="Nome ou matrícula"
+            className="pl-9"
+          />
         </div>
-        <Select value={status} onChange={(event) => setStatus(event.target.value)}>
+        <Select value={status} onChange={(event) => handleFilterChange(() => setStatus(event.target.value))}>
           <option value="">Status</option>
           <option value="ATIVO">ATIVO</option>
           <option value="INATIVO">INATIVO</option>
         </Select>
-        <Select value={setor} onChange={(event) => setSetor(event.target.value)}>
+        <Select value={setor} onChange={(event) => handleFilterChange(() => setSetor(event.target.value))}>
           <option value="">Setor</option>
           {state.setores.map((item) => (
             <option key={item.id} value={item.nome}>
@@ -104,7 +121,7 @@ export default function FuncionariosPage() {
             </option>
           ))}
         </Select>
-        <Select value={cargo} onChange={(event) => setCargo(event.target.value)}>
+        <Select value={cargo} onChange={(event) => handleFilterChange(() => setCargo(event.target.value))}>
           <option value="">Cargo</option>
           {state.cargos.map((item) => (
             <option key={item.id} value={item.nome}>
@@ -119,6 +136,7 @@ export default function FuncionariosPage() {
             setStatus("");
             setSetor("");
             setCargo("");
+            setPage(1);
           }}
         >
           <Filter size={16} aria-hidden />
@@ -131,15 +149,15 @@ export default function FuncionariosPage() {
           <tr>
             <Th>Foto</Th>
             <Th>Nome</Th>
-            <Th>Matricula</Th>
+            <Th>Matrícula</Th>
             <Th>Cargo</Th>
             <Th>Setor</Th>
             <Th>Status</Th>
-            <Th>Acoes</Th>
+            <Th>Ações</Th>
           </tr>
         </thead>
         <tbody>
-          {filtered.map((funcionario) => (
+          {paginated.map((funcionario) => (
             <tr key={funcionario.id}>
               <Td>
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-200 text-xs font-semibold">
@@ -155,17 +173,25 @@ export default function FuncionariosPage() {
               </Td>
               <Td>
                 <div className="flex items-center gap-2">
-                  <Link href={`/funcionarios/${funcionario.id}`} className="rounded-md border border-line p-2 text-muted transition hover:border-ink hover:text-ink" aria-label="Visualizar funcionario">
+                  <Link
+                    href={`/funcionarios/${funcionario.id}`}
+                    className="rounded-md border border-line p-2 text-muted transition hover:border-ink hover:text-ink"
+                    aria-label="Visualizar funcionário"
+                  >
                     <Eye size={15} aria-hidden />
                   </Link>
-                  <Link href={`/funcionarios/${funcionario.id}`} className="rounded-md border border-line p-2 text-muted transition hover:border-ink hover:text-ink" aria-label="Editar funcionario">
+                  <Link
+                    href={`/funcionarios/${funcionario.id}`}
+                    className="rounded-md border border-line p-2 text-muted transition hover:border-ink hover:text-ink"
+                    aria-label="Editar funcionário"
+                  >
                     <Edit3 size={15} aria-hidden />
                   </Link>
                   <button
                     type="button"
                     onClick={() => toggleStatus(funcionario.id)}
                     className="rounded-md border border-line p-2 text-muted transition hover:border-ink hover:text-ink"
-                    aria-label={funcionario.status === "ATIVO" ? "Desativar funcionario" : "Reativar funcionario"}
+                    aria-label={funcionario.status === "ATIVO" ? "Desativar funcionário" : "Reativar funcionário"}
                   >
                     {funcionario.status === "ATIVO" ? <ToggleRight size={15} aria-hidden /> : <ToggleLeft size={15} aria-hidden />}
                   </button>
@@ -173,15 +199,20 @@ export default function FuncionariosPage() {
               </Td>
             </tr>
           ))}
-          {!filtered.length ? (
+          {!paginated.length ? (
             <tr>
-              <Td colSpan={7}>Nenhum funcionario encontrado com os filtros atuais.</Td>
+              <Td colSpan={7}>Nenhum funcionário encontrado com os filtros atuais.</Td>
             </tr>
           ) : null}
         </tbody>
       </Table>
 
-      <Pagination totalLabel={`Exibindo ${filtered.length} de ${funcionarios.length} registros`} />
+      <Pagination
+        totalLabel={`Exibindo ${paginated.length} de ${filtered.length} registros`}
+        page={safePage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </>
   );
 }

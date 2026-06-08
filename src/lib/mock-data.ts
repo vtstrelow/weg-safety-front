@@ -16,7 +16,7 @@ import type {
 export const cargos: EntityOption[] = [
   { id: "cargo-1", nome: "Analista TI", ativo: true },
   { id: "cargo-2", nome: "Operador", ativo: true },
-  { id: "cargo-3", nome: "Supervisora", ativo: true },
+  { id: "cargo-3", nome: "Supervisor", ativo: true },
   { id: "cargo-4", nome: "Manutenção Mecânica", ativo: true }
 ];
 
@@ -58,7 +58,7 @@ export const funcionarios: FuncionarioResumo[] = [
     id: "func-3",
     nome: "Carla Mendes",
     matricula: "003041",
-    cargo: "Supervisora",
+    cargo: "Supervisor",
     setor: "Qualidade",
     status: "ATIVO",
     cracha: { uid_rfid: "RFID-1F20", validade: "2026-01-15", status: "ATIVO" }
@@ -184,7 +184,7 @@ export const areaDetalhe: AreaDetalhe = {
   epis_obrigatorios: [epiTipos[0], epiTipos[1], epiTipos[2]],
   whitelist: [
     { id: "perm-1", funcionario_id: "func-4", nome: "Pedro R.", cargo: "Manutenção Mecânica" },
-    { id: "perm-2", funcionario_id: "func-3", nome: "Carla Mendes", cargo: "Supervisora" }
+    { id: "perm-2", funcionario_id: "func-3", nome: "Carla Mendes", cargo: "Supervisor" }
   ],
   blacklist: [{ id: "perm-3", funcionario_id: "func-2", nome: "Bruno Lima", motivo: "Restrição operacional" }],
   restricoes_horario: [
@@ -296,7 +296,7 @@ export const areaFuncionarios: AreaFuncionario[] = [
     id: "func-3",
     nome: "Carla Mendes",
     matricula: "003041",
-    cargo: "Supervisora",
+    cargo: "Supervisor",
     tipo_permissao: "WHITELIST",
     epis_validos: true
   },

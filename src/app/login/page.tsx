@@ -30,7 +30,11 @@ export default function LoginPage() {
     if (!email.includes("@") || senha.length < 4) {
       const nextAttempts = attempts + 1;
       setAttempts(nextAttempts);
-      setError(nextAttempts >= 5 ? "Conta bloqueada por excesso de tentativas nesta simulacao." : "Informe um e-mail valido e senha com pelo menos 4 caracteres.");
+      setError(
+        nextAttempts >= 5
+          ? "Conta bloqueada por excesso de tentativas nesta simulação."
+          : "Informe um e-mail válido e senha com pelo menos 4 caracteres."
+      );
       setLoading(false);
       return;
     }
@@ -82,16 +86,25 @@ export default function LoginPage() {
               <button
                 type="button"
                 aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                className="absolute right-2 top-1/2 rounded-md p-2 text-muted transition hover:bg-black/5 hover:text-ink"
-                onClick={() => setShowPassword((current) => !current)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-2 text-muted transition hover:bg-black/5 hover:text-ink"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setShowPassword((current) => !current);
+                }}
               >
                 {showPassword ? <EyeOff size={17} aria-hidden /> : <Eye size={17} aria-hidden />}
               </button>
             </div>
           </Field>
 
-          {error ? <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-danger">{error}</p> : null}
-          {message ? <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{message}</p> : null}
+          {error ? (
+            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-danger">{error}</p>
+          ) : null}
+          {message ? (
+            <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+              {message}
+            </p>
+          ) : null}
 
           <Button type="submit" disabled={loading}>
             <LockKeyhole size={16} aria-hidden />
@@ -103,14 +116,14 @@ export default function LoginPage() {
             className="text-sm font-medium text-muted transition hover:text-ink"
             onClick={() => {
               setError("");
-              setMessage("Um link de redefinicao simulado foi enviado para o e-mail informado.");
+              setMessage("Um link de redefinição simulado foi enviado para o e-mail informado.");
             }}
           >
             Esqueci minha senha
           </button>
         </form>
 
-        <p className="mt-5 text-center text-xs text-muted">Conta bloqueada apos 5 tentativas invalidas</p>
+        <p className="mt-5 text-center text-xs text-muted">Conta bloqueada após 5 tentativas inválidas</p>
       </section>
     </main>
   );
