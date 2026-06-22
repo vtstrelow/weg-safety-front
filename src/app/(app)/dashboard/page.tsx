@@ -77,26 +77,6 @@ export default function DashboardPage() {
         }
       />
 
-      <section className="mb-5 grid gap-4 overflow-hidden rounded-lg border border-[#18201f] bg-[#121615] p-5 text-white shadow-lift lg:grid-cols-[1fr_auto] lg:items-center">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-emerald-200">
-            <ShieldCheck size={20} aria-hidden />
-          </span>
-          <div>
-            <p className="text-sm font-bold text-white">Operacao em modo administrativo</p>
-            <p className="mt-1 max-w-3xl text-sm leading-6 text-white/65">
-              Dados locais persistidos. Cadastros, filtros e acoes ja funcionam enquanto o backend nao esta online.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Badge tone="success">Mock ativo</Badge>
-          <span className="inline-flex min-h-6 items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white">
-            JWT simulado
-          </span>
-        </div>
-      </section>
-
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => {
           const Icon = card.icon;
